@@ -30,13 +30,6 @@ DEFAULT_DATA_QUALITY_RULESET = """
     ]
 """
 
-# Script generated for node accelerometer_landing
-accelerometer_landing_node1777505044988 = glueContext.create_dynamic_frame.from_catalog(
-    database="stedi_db",
-    table_name="accelerometer_landing",
-    transformation_ctx="accelerometer_landing_node1777505044988",
-)
-
 # Script generated for node customer_trusted
 customer_trusted_node1777505082995 = glueContext.create_dynamic_frame.from_catalog(
     database="stedi_db",
@@ -44,15 +37,27 @@ customer_trusted_node1777505082995 = glueContext.create_dynamic_frame.from_catal
     transformation_ctx="customer_trusted_node1777505082995",
 )
 
+# Script generated for node accelerometer_landing
+accelerometer_landing_node1777558502298 = glueContext.create_dynamic_frame.from_options(
+    format_options={"multiLine": "false"},
+    connection_type="s3",
+    format="json",
+    connection_options={
+        "paths": ["s3://d609-udacity/accelerometer/landing/"],
+        "recurse": True,
+    },
+    transformation_ctx="accelerometer_landing_node1777558502298",
+)
+
 # Script generated for node update timestamp type
 updatetimestamptype_node1777505905483 = ApplyMapping.apply(
-    frame=accelerometer_landing_node1777505044988,
+    frame=accelerometer_landing_node1777558502298,
     mappings=[
         ("user", "string", "user", "string"),
-        ("timestamp", "timestamp", "timestamp", "timestamp"),
-        ("x", "float", "x", "double"),
-        ("y", "float", "y", "double"),
-        ("z", "float", "z", "double"),
+        ("timestamp", "long", "timestamp", "timestamp"),
+        ("x", "double", "x", "double"),
+        ("y", "double", "y", "double"),
+        ("z", "double", "z", "double"),
     ],
     transformation_ctx="updatetimestamptype_node1777505905483",
 )

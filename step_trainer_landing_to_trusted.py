@@ -39,10 +39,15 @@ customer_curated_node1777517403712 = glueContext.create_dynamic_frame.from_catal
 )
 
 # Script generated for node step_trainer_landing
-step_trainer_landing_node1777504197064 = glueContext.create_dynamic_frame.from_catalog(
-    database="stedi_db",
-    table_name="step_trainer_landing",
-    transformation_ctx="step_trainer_landing_node1777504197064",
+step_trainer_landing_node1777558599139 = glueContext.create_dynamic_frame.from_options(
+    format_options={"multiLine": "false"},
+    connection_type="s3",
+    format="json",
+    connection_options={
+        "paths": ["s3://d609-udacity/step_trainer/landing/"],
+        "recurse": True,
+    },
+    transformation_ctx="step_trainer_landing_node1777558599139",
 )
 
 # Script generated for node SQL Query
@@ -56,7 +61,7 @@ SQLQuery_node1777517477095 = sparkSqlQuery(
     query=SqlQuery0,
     mapping={
         "customer_curated": customer_curated_node1777517403712,
-        "step_trainer_landing": step_trainer_landing_node1777504197064,
+        "step_trainer_landing": step_trainer_landing_node1777558599139,
     },
     transformation_ctx="SQLQuery_node1777517477095",
 )

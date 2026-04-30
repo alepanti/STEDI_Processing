@@ -116,15 +116,17 @@ EvaluateDataQuality().process_rows(
         "observations.scope": "ALL",
     },
 )
-customer_curated_node1777560598742 = glueContext.write_dynamic_frame.from_options(
-    frame=DetectSensitiveData_node1777560638326,
+customer_curated_node1777560598742 = glueContext.getSink(
+    path="s3://d609-udacity/customer/curated/",
     connection_type="s3",
-    format="json",
-    connection_options={
-        "path": "s3://d609-udacity/customer/curated/",
-        "partitionKeys": [],
-    },
+    updateBehavior="UPDATE_IN_DATABASE",
+    partitionKeys=[],
+    enableUpdateCatalog=True,
     transformation_ctx="customer_curated_node1777560598742",
 )
-
+customer_curated_node1777560598742.setCatalogInfo(
+    catalogDatabase="stedi_db", catalogTableName="customer_curated"
+)
+customer_curated_node1777560598742.setFormat("json")
+customer_curated_node1777560598742.writeFrame(DetectSensitiveData_node1777560638326)
 job.commit()

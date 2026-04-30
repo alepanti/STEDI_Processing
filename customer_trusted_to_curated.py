@@ -36,31 +36,25 @@ DEFAULT_DATA_QUALITY_RULESET = """
 """
 
 # Script generated for node accelerometer_trusted
-accelerometer_trusted_node1777559737740 = glueContext.create_dynamic_frame.from_options(
-    format_options={"multiLine": "false"},
-    connection_type="s3",
-    format="json",
-    connection_options={"paths": ["s3://d609-udacity/accelerometer/"], "recurse": True},
+accelerometer_trusted_node1777559737740 = glueContext.create_dynamic_frame.from_catalog(
+    database="stedi_db",
+    table_name="accelerometer_trusted",
     transformation_ctx="accelerometer_trusted_node1777559737740",
 )
 
 # Script generated for node customer_trusted
-customer_trusted_node1777559735717 = glueContext.create_dynamic_frame.from_options(
-    format_options={"multiLine": "false"},
-    connection_type="s3",
-    format="json",
-    connection_options={
-        "paths": ["s3://d609-udacity/customer/trusted/"],
-        "recurse": True,
-    },
+customer_trusted_node1777559735717 = glueContext.create_dynamic_frame.from_catalog(
+    database="stedi_db",
+    table_name="customer_trusted",
     transformation_ctx="customer_trusted_node1777559735717",
 )
 
 # Script generated for node SQL Query
 SqlQuery0 = """
-select DISTINCT c.* from customer_trusted c 
-inner join accelerometer_trusted a 
-    on a.user = c.email
+SELECT DISTINCT c.*
+    FROM customer_trusted c
+    INNER JOIN accelerometer_trusted a
+        ON c.email = a.user
 """
 SQLQuery_node1777560510390 = sparkSqlQuery(
     glueContext,

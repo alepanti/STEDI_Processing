@@ -62,7 +62,7 @@ changetotimestamp_node1777560024856 = ApplyMapping.apply(
         ("email", "string", "email", "string"),
         ("phone", "string", "phone", "string"),
         ("birthDay", "string", "birthDay", "date"),
-        ("serialNumber", "string", "serialNumber", "timestamp"),
+        ("serialNumber", "string", "serialNumber", "string"),
         ("registrationDate", "bigint", "registrationDate", "timestamp"),
         ("lastUpdateDate", "bigint", "lastUpdateDate", "timestamp"),
         (

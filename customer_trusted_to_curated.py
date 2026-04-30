@@ -58,7 +58,7 @@ customer_trusted_node1777559735717 = glueContext.create_dynamic_frame.from_optio
 
 # Script generated for node SQL Query
 SqlQuery0 = """
-select c.* from customer_trusted c 
+select DISTINCT c.* from customer_trusted c 
 inner join accelerometer_trusted a 
     on a.user = c.email
 """

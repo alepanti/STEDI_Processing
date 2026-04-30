@@ -1,6 +1,5 @@
 import sys
 
-import gs_to_timestamp
 from awsglue import DynamicFrame
 from awsglue.context import GlueContext
 from awsglue.job import Job
@@ -32,10 +31,15 @@ DEFAULT_DATA_QUALITY_RULESET = """
 """
 
 # Script generated for node customer_curated
-customer_curated_node1777517403712 = glueContext.create_dynamic_frame.from_catalog(
-    database="stedi_db",
-    table_name="customer_curated",
-    transformation_ctx="customer_curated_node1777517403712",
+customer_curated_node1777561605781 = glueContext.create_dynamic_frame.from_options(
+    format_options={"multiLine": "false"},
+    connection_type="s3",
+    format="json",
+    connection_options={
+        "paths": ["s3://d609-udacity/customer/curated/"],
+        "recurse": True,
+    },
+    transformation_ctx="customer_curated_node1777561605781",
 )
 
 # Script generated for node step_trainer_landing
@@ -60,22 +64,26 @@ SQLQuery_node1777517477095 = sparkSqlQuery(
     glueContext,
     query=SqlQuery0,
     mapping={
-        "customer_curated": customer_curated_node1777517403712,
         "step_trainer_landing": step_trainer_landing_node1777558599139,
+        "customer_curated": customer_curated_node1777561605781,
     },
     transformation_ctx="SQLQuery_node1777517477095",
 )
 
-# Script generated for node convert sensorreadingtime to timestamp
-convertsensorreadingtimetotimestamp_node1777517604184 = (
-    SQLQuery_node1777517477095.gs_to_timestamp(
-        colName="sensorReadingTime", colType="autodetect"
-    )
+# Script generated for node Change Schema
+ChangeSchema_node1777563372959 = ApplyMapping.apply(
+    frame=SQLQuery_node1777517477095,
+    mappings=[
+        ("sensorReadingTime", "long", "sensorReadingTime", "timestamp"),
+        ("serialNumber", "string", "serialNumber", "string"),
+        ("distanceFromObject", "int", "distanceFromObject", "int"),
+    ],
+    transformation_ctx="ChangeSchema_node1777563372959",
 )
 
 # Script generated for node step_trainer_trusted
 EvaluateDataQuality().process_rows(
-    frame=convertsensorreadingtimetotimestamp_node1777517604184,
+    frame=ChangeSchema_node1777563372959,
     ruleset=DEFAULT_DATA_QUALITY_RULESET,
     publishing_options={
         "dataQualityEvaluationContext": "EvaluateDataQuality_node1777517302403",
@@ -98,7 +106,5 @@ step_trainer_trusted_node1777517660162.setCatalogInfo(
     catalogDatabase="stedi_db", catalogTableName="step_trainer_trusted"
 )
 step_trainer_trusted_node1777517660162.setFormat("json")
-step_trainer_trusted_node1777517660162.writeFrame(
-    convertsensorreadingtimetotimestamp_node1777517604184
-)
+step_trainer_trusted_node1777517660162.writeFrame(ChangeSchema_node1777563372959)
 job.commit()

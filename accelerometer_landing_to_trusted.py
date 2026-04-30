@@ -30,13 +30,6 @@ DEFAULT_DATA_QUALITY_RULESET = """
     ]
 """
 
-# Script generated for node customer_trusted
-customer_trusted_node1777505082995 = glueContext.create_dynamic_frame.from_catalog(
-    database="stedi_db",
-    table_name="customer_trusted",
-    transformation_ctx="customer_trusted_node1777505082995",
-)
-
 # Script generated for node accelerometer_landing
 accelerometer_landing_node1777558502298 = glueContext.create_dynamic_frame.from_options(
     format_options={"multiLine": "false"},
@@ -49,12 +42,24 @@ accelerometer_landing_node1777558502298 = glueContext.create_dynamic_frame.from_
     transformation_ctx="accelerometer_landing_node1777558502298",
 )
 
+# Script generated for node customer_trusted
+customer_trusted_node1777560250217 = glueContext.create_dynamic_frame.from_options(
+    format_options={"multiLine": "false"},
+    connection_type="s3",
+    format="json",
+    connection_options={
+        "paths": ["s3://d609-udacity/customer/trusted/"],
+        "recurse": True,
+    },
+    transformation_ctx="customer_trusted_node1777560250217",
+)
+
 # Script generated for node update timestamp type
 updatetimestamptype_node1777505905483 = ApplyMapping.apply(
     frame=accelerometer_landing_node1777558502298,
     mappings=[
         ("user", "string", "user", "string"),
-        ("timestamp", "long", "timestamp", "timestamp"),
+        ("timestamp", "bigint", "timestamp", "timestamp"),
         ("x", "double", "x", "double"),
         ("y", "double", "y", "double"),
         ("z", "double", "z", "double"),
@@ -74,7 +79,7 @@ SQLQuery_node1777505130955 = sparkSqlQuery(
     query=SqlQuery0,
     mapping={
         "accelerometer_landing": updatetimestamptype_node1777505905483,
-        "customer_trusted": customer_trusted_node1777505082995,
+        "customer_trusted": customer_trusted_node1777560250217,
     },
     transformation_ctx="SQLQuery_node1777505130955",
 )

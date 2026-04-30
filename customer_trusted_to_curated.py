@@ -3,6 +3,7 @@ import sys
 
 from awsglue import DynamicFrame
 from awsglue.context import GlueContext
+from awsglue.dynamicframe import DynamicFrame
 from awsglue.job import Job
 from awsglue.transforms import *
 from awsglue.utils import getResolvedOptions
@@ -12,6 +13,14 @@ from pyspark.context import SparkContext
 from pyspark.sql.functions import *
 from pyspark.sql.types import StringType
 
+
+def sparkSqlQuery(glueContext, query, mapping, transformation_ctx) -> DynamicFrame:
+    for alias, frame in mapping.items():
+        frame.toDF().createOrReplaceTempView(alias)
+    result = spark.sql(query)
+    return DynamicFrame.fromDF(result, glueContext, transformation_ctx)
+
+
 args = getResolvedOptions(sys.argv, ["JOB_NAME"])
 sc = SparkContext()
 glueContext = GlueContext(sc)
@@ -19,44 +28,58 @@ spark = glueContext.spark_session
 job = Job(glueContext)
 job.init(args["JOB_NAME"], args)
 
+# Default ruleset used by all target nodes with data quality enabled
 DEFAULT_DATA_QUALITY_RULESET = """
     Rules = [
         ColumnCount > 0
     ]
 """
 
-# source accelerometer_landing
-accelerometer_trusted = glueContext.create_dynamic_frame.from_options(
+# Script generated for node accelerometer_trusted
+accelerometer_trusted_node1777559737740 = glueContext.create_dynamic_frame.from_options(
+    format_options={"multiLine": "false"},
     connection_type="s3",
-    connection_options={"paths": ["s3://d609-udacity/accelerometer/trusted/"]},
     format="json",
+    connection_options={"paths": ["s3://d609-udacity/accelerometer/"], "recurse": True},
+    transformation_ctx="accelerometer_trusted_node1777559737740",
 )
 
-# source customer_trusted
-customer_trusted = glueContext.create_dynamic_frame.from_options(
+# Script generated for node customer_trusted
+customer_trusted_node1777559735717 = glueContext.create_dynamic_frame.from_options(
+    format_options={"multiLine": "false"},
     connection_type="s3",
-    connection_options={"paths": ["s3://d609-udacity/customer/trusted/"]},
     format="json",
+    connection_options={
+        "paths": ["s3://d609-udacity/customer/trusted/"],
+        "recurse": True,
+    },
+    transformation_ctx="customer_trusted_node1777559735717",
 )
 
-# Register as temp views for Spark SQL
-accelerometer_trusted.toDF().createOrReplaceTempView("accelerometer_trusted")
-customer_trusted.toDF().createOrReplaceTempView("customer_trusted")
+# Script generated for node SQL Query
+SqlQuery0 = """
+select c.* from customer_trusted c 
+inner join accelerometer_trusted a 
+    on a.user = c.email
+"""
+SQLQuery_node1777560510390 = sparkSqlQuery(
+    glueContext,
+    query=SqlQuery0,
+    mapping={
+        "accelerometer_trusted": accelerometer_trusted_node1777559737740,
+        "customer_trusted": customer_trusted_node1777559735717,
+    },
+    transformation_ctx="SQLQuery_node1777560510390",
+)
 
-# Use DISTINCT to avoid row multiplication from one-to-many join
-curated_df = spark.sql("""
-    SELECT DISTINCT c.*
-    FROM customer_trusted c
-    INNER JOIN accelerometer_trusted a
-        ON c.email = a.user
-""")
-
-# Convert back to DynamicFrame
-curated_dynamic = DynamicFrame.fromDF(curated_df, glueContext, "customer_curated")
-
+# Script generated for node Detect Sensitive Data
 entity_detector = EntityDetector()
 classified_map = entity_detector.classify_columns(
-    curated_dynamic, ["EMAIL", "PERSON_NAME", "PHONE_NUMBER"], 1.0, 0.1, "HIGH"
+    SQLQuery_node1777560510390,
+    ["EMAIL", "PHONE_NUMBER", "PERSON_NAME"],
+    1.0,
+    0.1,
+    "HIGH",
 )
 
 
@@ -76,13 +99,16 @@ def hashDf(df, keys):
     return DynamicFrame.fromDF(df_to_hash, glueContext, "updated_hashed_df")
 
 
-DetectSensitiveData = hashDf(curated_dynamic, list(classified_map.keys()))
+DetectSensitiveData_node1777560638326 = hashDf(
+    SQLQuery_node1777560510390, list(classified_map.keys())
+)
 
+# Script generated for node customer_curated
 EvaluateDataQuality().process_rows(
-    frame=DetectSensitiveData,
+    frame=DetectSensitiveData_node1777560638326,
     ruleset=DEFAULT_DATA_QUALITY_RULESET,
     publishing_options={
-        "dataQualityEvaluationContext": "EvaluateDataQuality_at_dynamic",
+        "dataQualityEvaluationContext": "EvaluateDataQuality_node1777560014907",
         "enableDataQualityResultsPublishing": True,
     },
     additional_options={
@@ -90,17 +116,15 @@ EvaluateDataQuality().process_rows(
         "observations.scope": "ALL",
     },
 )
-
-# Script generated for node Customer Curated
-sink = glueContext.getSink(
-    path="s3://d609-udacity/customer/curated/",
+customer_curated_node1777560598742 = glueContext.write_dynamic_frame.from_options(
+    frame=DetectSensitiveData_node1777560638326,
     connection_type="s3",
-    updateBehavior="UPDATE_IN_DATABASE",
-    partitionKeys=[],
-    enableUpdateCatalog=True,
+    format="json",
+    connection_options={
+        "path": "s3://d609-udacity/customer/curated/",
+        "partitionKeys": [],
+    },
+    transformation_ctx="customer_curated_node1777560598742",
 )
-sink.setCatalogInfo(catalogDatabase="stedi_db", catalogTableName="customer_curated")
-sink.setFormat("json")
-sink.writeFrame(DetectSensitiveData)
 
 job.commit()

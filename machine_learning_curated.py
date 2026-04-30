@@ -36,32 +36,31 @@ DEFAULT_DATA_QUALITY_RULESET = """
 """
 
 # Script generated for node accelerometer_trusted
-accelerometer_trusted_node1777518039135 = glueContext.create_dynamic_frame.from_catalog(
+accelerometer_trusted_node1777588658305 = glueContext.create_dynamic_frame.from_catalog(
     database="stedi_db",
     table_name="accelerometer_trusted",
-    transformation_ctx="accelerometer_trusted_node1777518039135",
+    transformation_ctx="accelerometer_trusted_node1777588658305",
 )
 
 # Script generated for node step_trainer_trusted
-step_trainer_trusted_node1777518037352 = glueContext.create_dynamic_frame.from_catalog(
+step_trainer_trusted_node1777588659873 = glueContext.create_dynamic_frame.from_catalog(
     database="stedi_db",
     table_name="step_trainer_trusted",
-    transformation_ctx="step_trainer_trusted_node1777518037352",
+    transformation_ctx="step_trainer_trusted_node1777588659873",
 )
 
 # Script generated for node SQL Query
 SqlQuery0 = """
-SELECT * FROM step_trainer_trusted s
+SELECT * FROM step_trainer_trusted st
 INNER JOIN accelerometer_trusted a
-    ON a.timestamp = s.sensorreadingtime
-
+    ON a.timestamp = st.sensorreadingtime
 """
 SQLQuery_node1777518121066 = sparkSqlQuery(
     glueContext,
     query=SqlQuery0,
     mapping={
-        "step_trainer_trusted": step_trainer_trusted_node1777518037352,
-        "accelerometer_trusted": accelerometer_trusted_node1777518039135,
+        "accelerometer_trusted": accelerometer_trusted_node1777588658305,
+        "step_trainer_trusted": step_trainer_trusted_node1777588659873,
     },
     transformation_ctx="SQLQuery_node1777518121066",
 )
